@@ -180,12 +180,15 @@ class CrawlerScheduler(object):
         if hostname != 't.tiktok.com' and not dytk:
             return
         user_id = number[0]
-        video_count = self._download_user_media(user_id, dytk, url)
+        metadata = []
+        jsonfilename = user_id + '.json'
+        video_count = self._download_user_media(user_id, dytk, url,metadata)
         self.queue.join()
-        print("\nAweme number %s, video number %s\n\n" %
-              (user_id, str(video_count)))
+        with open(jsonfilename, mode='w', encoding='utf-8') as f:
+            json.dump(metadata, f)
+        print("\nAweme number %s, video number %s\n\n" % (user_id, str(video_count)))
         print("\nFinish Downloading All the videos from %s\n\n" % user_id)
-
+        
     def download_challenge_videos(self, url):
         challenge = re.findall('share/challenge/(\d+)', url)
         if not len(challenge):
@@ -209,8 +212,11 @@ class CrawlerScheduler(object):
     def _join_download_queue(self, aweme, target_folder):
         try:
             if aweme.get('video', None):
+                print(aweme)
                 uri = aweme['video']['play_addr']['uri']
                 digg_count = aweme['statistics']['digg_count']
+                if "w" in str(digg_count):
+                    digg_count = int(float(digg_count.split('w')[0])*10000)
                 download_url = "https://aweme.snssdk.com/aweme/v1/play/?{0}"
                 download_params = {
                     'video_id': uri,
@@ -259,7 +265,7 @@ class CrawlerScheduler(object):
                         'tz_offset': '28800'
                     }
                 share_info = aweme.get('share_info', {})
-                share_desc = str(digg_count) + "_" + share_info.get('share_desc', uri)
+                share_desc = str(digg_count) + "_" + uri
                 url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
                 self.queue.put(('video', share_desc, url, target_folder))
             else:
@@ -302,7 +308,7 @@ class CrawlerScheduler(object):
                 break
         return video_count
 
-    def _download_user_media(self, user_id, dytk, url):
+    def _download_user_media(self, user_id, dytk, url,metadata):
         current_folder = os.getcwd()
         target_folder = os.path.join(current_folder, 'download/%s' % user_id)
         if not os.path.isdir(target_folder):
@@ -337,6 +343,7 @@ class CrawlerScheduler(object):
                 video_count += 1
                 aweme['hostname'] = hostname
                 self._join_download_queue(aweme, target_folder)
+                metadata.append(aweme)
             if contentJson.get('has_more'):
                 max_cursor = contentJson.get('max_cursor')
             else:
