@@ -210,6 +210,7 @@ class CrawlerScheduler(object):
         try:
             if aweme.get('video', None):
                 uri = aweme['video']['play_addr']['uri']
+                digg_count = aweme['statistics']['digg_count']
                 download_url = "https://aweme.snssdk.com/aweme/v1/play/?{0}"
                 download_params = {
                     'video_id': uri,
@@ -258,8 +259,9 @@ class CrawlerScheduler(object):
                         'tz_offset': '28800'
                     }
                 share_info = aweme.get('share_info', {})
+                share_desc = str(digg_count) + "_" + share_info.get('share_desc', uri)
                 url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
-                self.queue.put(('video', share_info.get('share_desc', uri), url, target_folder))
+                self.queue.put(('video', share_desc, url, target_folder))
             else:
                 if aweme.get('image_infos', None):
                     image = aweme['image_infos']['label_large']
