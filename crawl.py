@@ -130,7 +130,8 @@ class CrawlerScheduler(object):
 			if re.search('share/user', url): self.numbers.append(url)
 			if re.search('share/challenge', url): self.challenges.append(url)
 			if re.search('share/music', url): self.musics.append(url)
-
+		# print(self.numbers)
+		# print("Here")
 		self.queue = Queue.Queue()
 		self.scheduling()
 
@@ -158,18 +159,42 @@ class CrawlerScheduler(object):
 
 	def download_user_videos(self, url):
 		number = re.findall(r'share/user/(\d+)', url)
-		if not len(number): return
+		if not len(number):
+			return
 		dytk = get_dytk(url)
-		if not dytk: return
+		hostname = urllib.parse.urlparse(url).hostname
+		if hostname != 't.tiktok.com' and not dytk:
+			return
 		user_id = number[0]
 		metadata = []
 		jsonfilename = user_id + '.json'
+
 		video_count = self._download_user_media(user_id, dytk, url,metadata)
 		self.queue.join()
 		with open(jsonfilename, mode='w', encoding='utf-8') as f:
 			json.dump(metadata, f)
-		print("\nAweme number %s, video number %s\n\n" % (user_id, str(video_count)))
+		print("\nAweme number %s, video number %s\n\n" %
+			  (user_id, str(video_count)))
 		print("\nFinish Downloading All the videos from %s\n\n" % user_id)
+
+	# def download_user_videos(self, url):
+	# 	number = re.findall(r'share/user/(\d+)', url)
+	# 	print(number)
+	# 	if not len(number): return
+	# 	dytk = get_dytk(url)
+	# 	print(dytk)
+	# 	if not dytk: return
+	# 	print("download user video")
+	# 	print(dytk)
+	# 	user_id = number[0]
+	# 	metadata = []
+	# 	jsonfilename = user_id + '.json'
+	# 	video_count = self._download_user_media(user_id, dytk, url,metadata)
+	# 	self.queue.join()
+	# 	with open(jsonfilename, mode='w', encoding='utf-8') as f:
+	# 		json.dump(metadata, f)
+	# 	print("\nAweme number %s, video number %s\n\n" % (user_id, str(video_count)))
+	# 	print("\nFinish Downloading All the videos from %s\n\n" % user_id)
 
 	def download_challenge_videos(self, url):
 		challenge = re.findall('share/challenge/(\d+)', url)
@@ -230,7 +255,13 @@ class CrawlerScheduler(object):
 					'aid': '1128',
 					'ac': 'WIFI'
 				}
-				if aweme.get('hostname') == 't.tiktok.com':
+				# print(aweme)
+				# print("=======================================")
+				# print(aweme['desc'])
+				# print(aweme['hostname'])
+				is_global = True
+				if is_global:
+					# print("here:")
 					download_url = 'http://api.tiktokv.com/aweme/v1/play/?{0}'
 					download_params = {
 						'video_id': uri,

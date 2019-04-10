@@ -255,7 +255,6 @@ class CrawlerScheduler(object):
                         'test_cdn': 'None',
                         'improve_bitrate': '0',
                         'version_code': '1.7.2',
-                        'language': 'en',
                         'app_name': 'trill',
                         'vid': 'D7B3981F-DD46-45A1-A97E-428B90096C3E',
                         'app_version': '1.7.2',
